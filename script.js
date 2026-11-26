@@ -8,7 +8,7 @@
   'use strict';
 
   const STORAGE_KEY_PROJECTS = 'ngykhang_portfolio_projects_v3';
-  const STORAGE_KEY_PROFILE = 'ngykhang_portfolio_profile_v3';
+  const STORAGE_KEY_PROFILE = 'ngykhang_portfolio_profile_v4';
   const STORAGE_KEY_VIEWS = 'ngykhang_portfolio_views_v3';
   const DB_NAME = 'NgyKhangVaultDB';
   const DB_STORE = 'files';
@@ -100,8 +100,8 @@
      ------------------------------------------------------------------------ */
   const DEFAULT_PROFILE = {
     brand: 'Ngy Khang',
-    headline: 'Không gian lưu trữ & chia sẻ dự án cá nhân.',
-    bio: 'Tổng hợp các ứng dụng, công cụ dòng lệnh, giao diện web và mã nguồn mở do Ngy Khang xây dựng. Bạn có thể xem chi tiết và tải về trực tiếp bản phát hành mới nhất ngay tại đây.',
+    headline: 'Nơi mình cất mấy món đồ tự code & chia sẻ free.',
+    bio: 'Mấy app nhỏ, tool nghịch vui, web hay mã nguồn do Ngy Khang tự tay làm ra. Thích món nào cứ bấm xem chi tiết rồi tải thẳng về máy xài nhé.',
     email: 'contact@ngykhang.dev',
     github: 'https://github.com'
   };
@@ -296,7 +296,14 @@
     document.getElementById('brand-initial').textContent = mono;
     document.getElementById('brand-name').textContent = profile.brand;
     document.getElementById('footer-brand').textContent = profile.brand;
-    document.getElementById('profile-headline').textContent = profile.headline;
+
+    const headlineEl = document.getElementById('profile-headline');
+    if (profile.headline === DEFAULT_PROFILE.headline) {
+      headlineEl.innerHTML = `Nơi mình cất mấy món đồ <span class="hand-highlight">tự code<svg class="hand-underline" viewBox="0 0 220 18" preserveAspectRatio="none" aria-hidden="true"><path d="M3 13 C 45 4, 115 16, 217 6" /></svg></span> &amp; chia sẻ free.`;
+    } else {
+      headlineEl.textContent = profile.headline;
+    }
+
     document.getElementById('profile-bio').textContent = profile.bio;
     document.getElementById('contact-email-label').textContent = profile.email;
     document.getElementById('contact-github-link').href = profile.github;
@@ -306,7 +313,7 @@
     const eyebrow = document.getElementById('profile-eyebrow');
     if (introMono) introMono.textContent = mono;
     if (introBrand) introBrand.textContent = profile.brand;
-    if (eyebrow) eyebrow.textContent = `01 / ${profile.brand.toUpperCase()} — PORTFOLIO & RELEASES`;
+    if (eyebrow) eyebrow.textContent = `~ góc nhỏ nghịch code của ${profile.brand} ✦`;
 
     document.title = `${profile.brand} — Kho Dự Án Cá Nhân & Tải Về`;
   }
@@ -324,6 +331,11 @@
     document.getElementById('stat-views').textContent = viewsText;
     document.getElementById('stat-projects').textContent = projectsText;
     document.getElementById('stat-downloads').textContent = stats.downloads.toLocaleString('vi-VN');
+
+    const popViews = document.getElementById('pop-views');
+    const popProjects = document.getElementById('pop-projects');
+    if (popViews) popViews.textContent = viewsText;
+    if (popProjects) popProjects.textContent = projectsText;
 
     const floatViews = document.getElementById('floating-stat-views');
     const floatProjects = document.getElementById('floating-stat-projects');
@@ -833,6 +845,54 @@
     onScroll();
   }
 
+  function rollLiveStat(mainEl, popEl, target) {
+    if (!mainEl) return;
+    const exactText = target.toLocaleString('vi-VN');
+    if (prefersReducedMotion) {
+      mainEl.textContent = exactText;
+      if (popEl) popEl.textContent = exactText;
+      return;
+    }
+
+    if (mainEl._rollFrame) cancelAnimationFrame(mainEl._rollFrame);
+    mainEl.classList.add('is-rolling');
+
+    if (target <= 0) {
+      const steps = ['·', '0'];
+      let idx = 0;
+      const tickZero = () => {
+        const val = steps[idx++];
+        mainEl.textContent = val;
+        if (popEl) popEl.textContent = val;
+        if (idx < steps.length) {
+          mainEl._rollFrame = requestAnimationFrame(() => setTimeout(tickZero, 110));
+        } else {
+          setTimeout(() => mainEl.classList.remove('is-rolling'), 260);
+        }
+      };
+      tickZero();
+      return;
+    }
+
+    const duration = Math.min(420 + target * 12, 760);
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const current = Math.round(target * eased).toLocaleString('vi-VN');
+      mainEl.textContent = current;
+      if (popEl) popEl.textContent = current;
+      if (t < 1) {
+        mainEl._rollFrame = requestAnimationFrame(step);
+      } else {
+        mainEl.textContent = exactText;
+        if (popEl) popEl.textContent = exactText;
+        setTimeout(() => mainEl.classList.remove('is-rolling'), 200);
+      }
+    };
+    mainEl._rollFrame = requestAnimationFrame(step);
+  }
+
   /* ------------------------------------------------------------------------
      10. Event Wiring
      ------------------------------------------------------------------------ */
@@ -841,8 +901,62 @@
       document.getElementById(id)?.addEventListener('click', () => openModal('upload-modal'));
     });
 
+    // Playful personal easter-egg when clicking brand logo
+    const cheekyNotes = [
+      'Chào bạn, cảm ơn đã ghé góc nhỏ của Ngy Khang nha!',
+      'Ê, bấm vào logo NK có thấy nó lắc không?',
+      'Góc này toàn đồ tự code lúc rảnh thôi đó.',
+      'Thích dự án nào cứ tải về vọc thoải mái nhé!'
+    ];
+    let noteIdx = 0;
+    document.getElementById('brand-link')?.addEventListener('click', () => {
+      showToast(cheekyNotes[noteIdx % cheekyNotes.length]);
+      noteIdx += 1;
+    });
+
+    // Hover / tap live rolling counter on Views & Projects stats
+    const statItems = [
+      {
+        box: document.getElementById('stat-item-views'),
+        val: document.getElementById('stat-views'),
+        pop: document.getElementById('pop-views'),
+        getTarget: () => getRealStats().views
+      },
+      {
+        box: document.getElementById('stat-item-projects'),
+        val: document.getElementById('stat-projects'),
+        pop: document.getElementById('pop-projects'),
+        getTarget: () => getRealStats().projects
+      }
+    ];
+
+    statItems.forEach(({ box, val, pop, getTarget }) => {
+      if (!box) return;
+      let popTimer = null;
+      const triggerRoll = () => rollLiveStat(val, pop, getTarget());
+      box.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse') triggerRoll();
+      });
+      box.addEventListener('focus', triggerRoll);
+      box.addEventListener('click', () => {
+        triggerRoll();
+        box.classList.add('is-pop-open');
+        clearTimeout(popTimer);
+        popTimer = setTimeout(() => box.classList.remove('is-pop-open'), 1900);
+      });
+    });
+
     const floatingStats = document.getElementById('floating-stats');
+    floatingStats?.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const st = getRealStats();
+      rollLiveStat(document.getElementById('floating-stat-views'), null, st.views);
+      rollLiveStat(document.getElementById('floating-stat-projects'), null, st.projects);
+    });
     floatingStats?.addEventListener('click', () => {
+      const st = getRealStats();
+      rollLiveStat(document.getElementById('floating-stat-views'), null, st.views);
+      rollLiveStat(document.getElementById('floating-stat-projects'), null, st.projects);
       document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
     });
     floatingStats?.addEventListener('keydown', (e) => {

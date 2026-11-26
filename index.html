@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="styles.css" />
@@ -26,7 +26,7 @@
       <div class="intro-title-mask">
         <div class="intro-title" id="intro-brand">Ngy Khang</div>
       </div>
-      <div class="intro-sub">Portfolio &amp; Project Releases</div>
+      <div class="intro-sub">~ góc nhỏ &amp; kho đồ tự code</div>
       <div class="intro-bar-wrap">
         <div class="intro-bar" id="intro-bar"></div>
       </div>
@@ -49,16 +49,16 @@
   <!-- Header -->
   <header class="site-header" id="site-header">
     <div class="container header-inner">
-      <a href="#hero" class="brand" id="brand-link">
+      <a href="#hero" class="brand" id="brand-link" title="Bấm thử xem có gì vui không!">
         <span class="brand-mark" id="brand-initial">NK</span>
         <span id="brand-name">Ngy Khang</span>
       </a>
 
       <nav aria-label="Điều hướng chính">
         <ul class="nav-links">
-          <li><a href="#projects">Dự án</a></li>
-          <li><a href="#about">Giới thiệu</a></li>
-          <li><a href="#contact">Liên hệ</a></li>
+          <li><a href="#projects">Đồ mình làm</a></li>
+          <li><a href="#about">Về Khang</a></li>
+          <li><a href="#contact">Nhắn tin</a></li>
         </ul>
       </nav>
 
@@ -94,9 +94,9 @@
 
   <!-- Mobile Navigation Drawer -->
   <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
-    <a href="#projects" class="mobile-nav-link">01. Dự án</a>
-    <a href="#about" class="mobile-nav-link">02. Giới thiệu</a>
-    <a href="#contact" class="mobile-nav-link">03. Liên hệ</a>
+    <a href="#projects" class="mobile-nav-link">01. Đồ mình làm</a>
+    <a href="#about" class="mobile-nav-link">02. Về Khang</a>
+    <a href="#contact" class="mobile-nav-link">03. Nhắn tin</a>
     <a href="#upload" class="mobile-nav-link" id="mobile-upload-trigger">+ Đăng dự án mới</a>
   </div>
 
@@ -105,17 +105,24 @@
     <section class="hero" id="hero">
       <div class="container">
         <div class="hero-content" id="hero-parallax">
-          <span class="mono-label hero-eyebrow hero-enter" data-delay="1" id="profile-eyebrow">01 / NGY KHANG — PORTFOLIO &amp; RELEASES</span>
+          <span class="hand-note hero-eyebrow hero-enter" data-delay="1" id="profile-eyebrow">~ góc nhỏ nghịch code của Ngy Khang ✦</span>
           <h1 class="hero-title hero-enter" data-delay="2" id="profile-headline">
-            Không gian lưu trữ &amp; chia sẻ dự án cá nhân.
+            Nơi mình cất mấy món đồ
+            <span class="hand-highlight">
+              tự code
+              <svg class="hand-underline" viewBox="0 0 220 18" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M3 13 C 45 4, 115 16, 217 6" />
+              </svg>
+            </span>
+            &amp; chia sẻ free.
           </h1>
           <p class="hero-subtitle hero-enter" data-delay="3" id="profile-bio">
-            Tổng hợp các ứng dụng, công cụ dòng lệnh, giao diện web và mã nguồn mở do Ngy Khang xây dựng. Bạn có thể xem chi tiết và tải về trực tiếp bản phát hành mới nhất ngay tại đây.
+            Mấy app nhỏ, tool nghịch vui, web hay mã nguồn do Ngy Khang tự tay làm ra. Thích món nào cứ bấm xem chi tiết rồi tải thẳng về máy xài nhé.
           </p>
 
           <div class="hero-actions hero-enter" data-delay="4">
             <a href="#projects" class="btn btn-primary btn-lg magnetic" id="hero-explore-btn">
-              <span>Khám phá dự án</span>
+              <span>Xem đồ mình làm</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -126,16 +133,24 @@
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span>Tải lên dự án</span>
+              <span>Up dự án mới</span>
             </button>
           </div>
 
           <div class="stats-strip hero-enter" id="stats-strip" data-delay="5" aria-label="Thống kê thực tế">
-            <div class="stat-item stat-item--ocean">
+            <div class="stat-item stat-item--ocean" id="stat-item-views" data-stat-type="views" tabindex="0">
+              <div class="stat-hover-pop" aria-hidden="true">
+                <span class="stat-hover-pop__dot"></span>
+                <span>Cập nhật: <strong id="pop-views">0</strong> lượt xem</span>
+              </div>
               <span class="stat-value" id="stat-views">0</span>
               <span class="stat-label">Lượt xem</span>
             </div>
-            <div class="stat-item stat-item--ocean">
+            <div class="stat-item stat-item--ocean" id="stat-item-projects" data-stat-type="projects" tabindex="0">
+              <div class="stat-hover-pop" aria-hidden="true">
+                <span class="stat-hover-pop__dot"></span>
+                <span>Cập nhật: <strong id="pop-projects">0</strong> dự án</span>
+              </div>
               <span class="stat-value" id="stat-projects">0</span>
               <span class="stat-label">Dự án đã đăng</span>
             </div>
@@ -147,7 +162,7 @@
 
           <div class="scroll-cue hero-enter" data-delay="6" id="scroll-cue">
             <span class="scroll-cue__line"></span>
-            <span>Cuộn xuống để xem dự án</span>
+            <span>Lướt xuống xem có gì hay nha</span>
           </div>
         </div>
       </div>
@@ -158,8 +173,8 @@
       <div class="container">
         <div class="section-header reveal">
           <div>
-            <span class="mono-label">02 / KHO DỰ ÁN</span>
-            <h2 class="section-title">Sản phẩm &amp; Bản phát hành</h2>
+            <span class="hand-note">~ kho đồ tự chế</span>
+            <h2 class="section-title">Mấy thứ mình đã làm</h2>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" id="section-upload-btn">
             + Thêm dự án
@@ -210,8 +225,8 @@
       <div class="container">
         <div class="section-header reveal">
           <div>
-            <span class="mono-label">03 / GIỚI THIỆU</span>
-            <h2 class="section-title">Về mình &amp; Quy trình làm việc</h2>
+            <span class="hand-note">~ đôi dòng tự bạch</span>
+            <h2 class="section-title">Về Ngy Khang</h2>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" id="edit-profile-btn">
             Chỉnh sửa hồ sơ
@@ -221,29 +236,30 @@
         <div class="about-grid">
           <div class="reveal">
             <p class="about-text" id="about-long-bio">
-              Mình tập trung xây dựng các sản phẩm phần mềm gọn nhẹ, tốc độ cao và dễ sử dụng. Mọi dự án được đăng tải tại đây đều có thể tải trực tiếp về máy để trải nghiệm, học hỏi hoặc tùy biến theo nhu cầu của bạn.
+              Mình thích mày mò làm mấy món phần mềm gọn nhẹ, chạy mượt và có chút cá tính riêng. Góc này là nơi mình cất mấy dự án tâm đắc — bạn thích cái nào cứ tải thẳng về dùng hoặc vọc mã nguồn thoải mái.
             </p>
             <p class="about-text">
-              Dữ liệu dự án bạn tải lên được lưu cục bộ trên trình duyệt bằng IndexedDB để giữ nguyên tệp đính kèm ngay cả khi tải lại trang.
+              Tệp bạn đăng lên được lưu ngay trên trình duyệt bằng IndexedDB để giữ nguyên file đính kèm kể cả khi tải lại trang.
             </p>
+            <span class="hand-note" style="font-size: 1.55rem; margin-top: 6px;">— Ngy Khang ✎</span>
           </div>
 
           <div class="skills-grid reveal">
             <div class="skill-block">
-              <h4>Giao diện &amp; Tương tác</h4>
-              <p>HTML5, CSS3, JavaScript, hiệu ứng cuộn mượt mà và thiết kế tương thích đa thiết bị.</p>
+              <h4>Vọc giao diện</h4>
+              <p>HTML5, CSS3, JS thuần — thích hiệu ứng mượt, nền tối dễ chịu và nghịch mấy chi tiết nhỏ.</p>
             </div>
             <div class="skill-block">
-              <h4>Công cụ &amp; Tự động hóa</h4>
-              <p>CLI Scripts, tiện ích năng suất cá nhân, đóng gói bản phát hành nhẹ và dễ cài đặt.</p>
+              <h4>Tool nhỏ có võ</h4>
+              <p>Tự chế mấy tiện ích nhẹ, mở lên là chạy ngay không rườm rà.</p>
             </div>
             <div class="skill-block">
-              <h4>Hiệu năng &amp; Tối ưu</h4>
-              <p>Không phụ thuộc thư viện nặng, ưu tiên 60fps trên cả máy tính lẫn điện thoại.</p>
+              <h4>Mượt cả Mobile &amp; PC</h4>
+              <p>Tối ưu chuyển động nhẹ nhàng để lướt trên điện thoại hay rê chuột máy tính đều đã tay.</p>
             </div>
             <div class="skill-block">
-              <h4>Chia sẻ mở</h4>
-              <p>Tải file trực tiếp hoặc liên kết đến kho GitHub Release chỉ với một cú chạm.</p>
+              <h4>Chia sẻ thoải mái</h4>
+              <p>Tải file trực tiếp hoặc nhảy sang link GitHub chỉ bằng một cú bấm.</p>
             </div>
           </div>
         </div>
@@ -251,9 +267,9 @@
         <!-- Contact Panel -->
         <div class="contact-panel reveal" id="contact">
           <div>
-            <span class="mono-label">04 / LIÊN HỆ</span>
-            <h3>Có ý tưởng hoặc muốn góp ý dự án?</h3>
-            <p>Kết nối trực tiếp qua email hoặc xem thêm mã nguồn trên GitHub.</p>
+            <span class="hand-note">~ nhắn mình nhé</span>
+            <h3>Thích nghịch chung hay có góp ý gì không?</h3>
+            <p>Gửi email hoặc ghé GitHub của mình chơi nhé.</p>
           </div>
           <div class="contact-actions">
             <button type="button" class="btn btn-primary magnetic" id="copy-email-btn">
