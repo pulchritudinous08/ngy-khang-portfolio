@@ -1,23 +1,37 @@
 /* ==========================================================================
-   Personal Portfolio & Project Hub — Interactive Engine
-   Supports: IndexedDB file storage, real file downloads, PC mouse-tracking,
-   3D tilt, magnetic buttons, scroll parallax, and mobile touch/scroll effects.
+   Ngy Khang — Personal Portfolio & Project Hub
+   Real stats (initialized at 0, prioritizing Views), user-only projects,
+   IndexedDB binary storage, 100% burst-out intro, PC mouse & Mobile scroll FX.
    ========================================================================== */
 
 (() => {
   'use strict';
 
-  const STORAGE_KEY_PROJECTS = 'ngykhang_portfolio_projects_v2';
-  const STORAGE_KEY_PROFILE = 'ngykhang_portfolio_profile_v2';
-  const DB_NAME = 'PortfolioVaultDB';
+  const STORAGE_KEY_PROJECTS = 'ngykhang_portfolio_projects_v3';
+  const STORAGE_KEY_PROFILE = 'ngykhang_portfolio_profile_v3';
+  const STORAGE_KEY_VIEWS = 'ngykhang_portfolio_views_v3';
+  const DB_NAME = 'NgyKhangVaultDB';
   const DB_STORE = 'files';
 
   /* ------------------------------------------------------------------------
-     1. Bespoke Minimalist Monochrome Cover Art Generator (SVG)
+     1. Minimalist Monochrome Cover Art Generator (SVG fallback if no cover)
      ------------------------------------------------------------------------ */
+  function escapeXML(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
   function generateCoverSVG(seedIndex, label) {
     const patterns = [
-      // Concentric architectural rings
       `<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="g0" cx="72%" cy="35%" r="65%">
@@ -34,8 +48,6 @@
         <line x1="48" y1="296" x2="280" y2="296" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/>
         <text x="48" y="280" fill="#f4f4f6" fill-opacity="0.55" font-family="monospace" font-size="13" letter-spacing="3">${escapeXML(label)}</text>
       </svg>`,
-
-      // Editorial diagonal planes
       `<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -52,8 +64,6 @@
         <rect x="48" y="258" width="28" height="2" fill="#e6d5b8" fill-opacity="0.7"/>
         <text x="48" y="292" fill="#f4f4f6" fill-opacity="0.55" font-family="monospace" font-size="13" letter-spacing="3">${escapeXML(label)}</text>
       </svg>`,
-
-      // Precision horology / timer arc
       `<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
         <rect width="640" height="360" fill="#08080a"/>
         <circle cx="320" cy="180" r="118" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5"/>
@@ -62,8 +72,6 @@
         <line x1="320" y1="180" x2="386" y2="128" stroke="#f4f4f6" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
         <text x="48" y="312" fill="#f4f4f6" fill-opacity="0.5" font-family="monospace" font-size="13" letter-spacing="3">${escapeXML(label)}</text>
       </svg>`,
-
-      // Layered terminal bars
       `<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="g3" cx="25%" cy="25%" r="70%">
@@ -87,22 +95,8 @@
     return patterns[Math.abs(seedIndex) % patterns.length];
   }
 
-  function escapeXML(str) {
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-  }
-
   /* ------------------------------------------------------------------------
-     2. Default Sample Projects (with Real Downloadable Files)
+     2. Default Profile & Empty User-Only Project Store
      ------------------------------------------------------------------------ */
   const DEFAULT_PROFILE = {
     brand: 'Ngy Khang',
@@ -112,157 +106,11 @@
     github: 'https://github.com'
   };
 
-  const DEFAULT_PROJECTS = [
-    {
-      id: 'sample-flux-motion',
-      title: 'Flux Motion Starter Kit',
-      category: 'Web',
-      version: 'v2.1.0',
-      description:
-        'Bộ khung giao diện nền đen tối giản tích hợp sẵn hiệu ứng dò chuột, thẻ nghiêng 3D và xuất hiện mượt mà khi cuộn trang trên cả điện thoại lẫn máy tính.',
-      tags: ['HTML5', 'CSS3', 'Vanilla JS'],
-      fileName: 'flux-motion-starter-v2.1.0.html',
-      fileType: 'text/html',
-      fileSize: 2840,
-      downloads: 184,
-      createdAt: Date.now() - 86400000 * 2,
-      coverIndex: 0,
-      isSample: true,
-      sampleContent: `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flux Motion Starter v2.1.0</title>
-  <style>
-    body { margin: 0; background: #060607; color: #f4f4f6; font-family: system-ui, sans-serif; min-height: 100vh; display: grid; place-items: center; }
-    .card { padding: 40px; border-radius: 16px; background: #111115; border: 1px solid rgba(255,255,255,0.1); max-width: 460px; text-align: center; transition: transform 0.3s ease; }
-    .card:hover { transform: translateY(-6px); border-color: rgba(230,213,184,0.45); }
-    h1 { margin: 0 0 12px; font-size: 1.75rem; }
-    p { color: #9d9da8; line-height: 1.6; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Flux Motion Starter</h1>
-    <p>File mẫu được tải về trực tiếp từ kho dự án cá nhân của Ngy Khang. Bạn có thể tùy biến tự do!</p>
-  </div>
-</body>
-</html>`
-    },
-    {
-      id: 'sample-focus-timer',
-      title: 'Obsidian Focus Timer',
-      category: 'Ứng dụng',
-      version: 'v1.3.0',
-      description:
-        'Ứng dụng đếm ngược Pomodoro nền đen không gây xao nhãng, chạy độc lập chỉ với một tệp HTML duy nhất và hỗ trợ chế độ nghỉ ngắn/dài.',
-      tags: ['App', 'Pomodoro', 'Offline'],
-      fileName: 'obsidian-focus-timer-v1.3.0.html',
-      fileType: 'text/html',
-      fileSize: 3120,
-      downloads: 129,
-      createdAt: Date.now() - 86400000 * 6,
-      coverIndex: 2,
-      isSample: true,
-      sampleContent: `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Obsidian Focus Timer v1.3.0</title>
-  <style>
-    body { margin: 0; background: #060607; color: #f4f4f6; font-family: system-ui, sans-serif; min-height: 100vh; display: grid; place-items: center; }
-    .box { text-align: center; padding: 48px; background: #111115; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-    #time { font-size: 4.5rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 16px 0 28px; color: #e6d5b8; }
-    button { background: #f4f4f6; color: #060607; border: 0; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 0 6px; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <div style="letter-spacing:2px;font-size:12px;color:#888">OBSIDIAN FOCUS</div>
-    <div id="time">25:00</div>
-    <button onclick="toggle()">Bắt đầu / Dừng</button>
-    <button onclick="reset()" style="background:#1c1c22;color:#fff">Đặt lại</button>
-  </div>
-  <script>
-    let sec = 1500, timer = null;
-    const el = document.getElementById('time');
-    function render() { el.textContent = String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0'); }
-    function toggle() { if (timer) { clearInterval(timer); timer = null; } else { timer = setInterval(() => { if (sec > 0) { sec--; render(); } }, 1000); } }
-    function reset() { clearInterval(timer); timer = null; sec = 1500; render(); }
-  </script>
-</body>
-</html>`
-    },
-    {
-      id: 'sample-notes-cli',
-      title: 'QuickNote CLI Utility',
-      category: 'Công cụ',
-      version: 'v1.4.2',
-      description:
-        'Công cụ dòng lệnh ghi chú nhanh bằng Node.js, lưu trực tiếp dưới dạng Markdown theo ngày và hỗ trợ tìm kiếm từ khóa tức thì.',
-      tags: ['Node.js', 'CLI', 'Markdown'],
-      fileName: 'quicknote-cli-v1.4.2.js',
-      fileType: 'text/javascript',
-      fileSize: 1640,
-      downloads: 96,
-      createdAt: Date.now() - 86400000 * 14,
-      coverIndex: 3,
-      isSample: true,
-      sampleContent: `#!/usr/bin/env node
-// QuickNote CLI v1.4.2 — Ghi chú Markdown nhanh từ Terminal
-const fs = require('fs');
-const path = require('path');
-
-const note = process.argv.slice(2).join(' ');
-const file = path.join(process.cwd(), 'notes.md');
-
-if (!note) {
-  console.log('Cách dùng: node quicknote-cli-v1.4.2.js "Nội dung ghi chú"');
-  process.exit(0);
-}
-
-const line = \`- [\${new Date().toISOString().slice(0, 16).replace('T', ' ')}] \${note}\\n\`;
-fs.appendFileSync(file, line, 'utf8');
-console.log('Đã lưu ghi chú vào', file);
-`
-    },
-    {
-      id: 'sample-backup-sh',
-      title: 'Auto-Backup Shell Script',
-      category: 'Mã nguồn',
-      version: 'v1.0.5',
-      description:
-        'Kịch bản Bash gọn nhẹ giúp tự động nén thư mục dự án kèm mốc thời gian, bỏ qua node_modules và giữ lại 5 bản sao lưu gần nhất.',
-      tags: ['Bash', 'Linux', 'Automation'],
-      fileName: 'auto-backup-v1.0.5.sh',
-      fileType: 'text/x-shellscript',
-      fileSize: 1180,
-      downloads: 73,
-      createdAt: Date.now() - 86400000 * 21,
-      coverIndex: 1,
-      isSample: true,
-      sampleContent: `#!/usr/bin/env bash
-# Auto-Backup Script v1.0.5
-set -euo pipefail
-
-SRC_DIR="\${1:-.}"
-OUT_DIR="\${2:-./backups}"
-STAMP="$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$OUT_DIR"
-
-ARCHIVE="$OUT_DIR/backup-$STAMP.tar.gz"
-tar --exclude='node_modules' --exclude='.git' --exclude="$OUT_DIR" -czf "$ARCHIVE" "$SRC_DIR"
-echo "Sao lưu hoàn tất: $ARCHIVE"
-`
-    }
-  ];
-
   /* ------------------------------------------------------------------------
      3. IndexedDB Wrapper for Uploaded Binary Files
      ------------------------------------------------------------------------ */
   let dbInstance = null;
+  const memoryFiles = new Map();
 
   function openDB() {
     return new Promise((resolve) => {
@@ -327,17 +175,15 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     }
   }
 
-  // In-memory fallback if IndexedDB is unavailable
-  const memoryFiles = new Map();
-
   /* ------------------------------------------------------------------------
-     4. Application State
+     4. Application State (All Real Stats Start at 0, No Sample Projects)
      ------------------------------------------------------------------------ */
   let projects = loadProjects();
   let profile = loadProfile();
+  let totalViews = loadViews();
   let activeCategory = 'all';
   let searchQuery = '';
-  let sortMode = 'newest';
+  let sortMode = 'views';
   let selectedUploadFile = null;
   let activeDetailId = null;
 
@@ -346,19 +192,19 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       const raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {
       // fallback
     }
-    return DEFAULT_PROJECTS.map((p) => ({ ...p }));
+    return [];
   }
 
   function persistProjects() {
     try {
       localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
     } catch {
-      // ignore quota error
+      // ignore
     }
   }
 
@@ -380,9 +226,35 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     }
   }
 
+  function loadViews() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_VIEWS);
+      const num = parseInt(raw, 10);
+      return Number.isFinite(num) && num >= 0 ? num : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function persistViews() {
+    try {
+      localStorage.setItem(STORAGE_KEY_VIEWS, String(totalViews));
+    } catch {
+      // ignore
+    }
+  }
+
   /* ------------------------------------------------------------------------
      5. Formatting & UI Helpers
      ------------------------------------------------------------------------ */
+  function getMonogram(name) {
+    const parts = String(name || 'NK').trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return (parts[0] || 'NK').slice(0, 2).toUpperCase();
+  }
+
   function formatBytes(bytes) {
     if (!bytes || bytes <= 0) return 'Liên kết ngoài';
     if (bytes < 1024) return `${bytes} B`;
@@ -417,16 +289,8 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
   }
 
   /* ------------------------------------------------------------------------
-     6. Render Profile, Stats & Projects
+     6. Render Profile, Real Stats & User Projects
      ------------------------------------------------------------------------ */
-  function getMonogram(name) {
-    const parts = String(name || 'NK').trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return (parts[0] || 'NK').slice(0, 2).toUpperCase();
-  }
-
   function renderProfile() {
     const mono = getMonogram(profile.brand);
     document.getElementById('brand-initial').textContent = mono;
@@ -447,14 +311,17 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     document.title = `${profile.brand} — Kho Dự Án Cá Nhân & Tải Về`;
   }
 
-  function renderStats() {
+  function getRealStats() {
     const totalProjects = projects.length;
     const totalDownloads = projects.reduce((sum, p) => sum + (p.downloads || 0), 0);
-    const latest = [...projects].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    return { views: totalViews, projects: totalProjects, downloads: totalDownloads };
+  }
 
-    document.getElementById('stat-projects').textContent = String(totalProjects).padStart(2, '0');
-    document.getElementById('stat-downloads').textContent = totalDownloads.toLocaleString('vi-VN');
-    document.getElementById('stat-latest').textContent = latest ? latest.version || 'v1.0' : '—';
+  function renderStats() {
+    const stats = getRealStats();
+    document.getElementById('stat-views').textContent = stats.views.toLocaleString('vi-VN');
+    document.getElementById('stat-projects').textContent = stats.projects.toLocaleString('vi-VN');
+    document.getElementById('stat-downloads').textContent = stats.downloads.toLocaleString('vi-VN');
   }
 
   function getFilteredProjects() {
@@ -467,7 +334,9 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       return haystack.includes(q);
     });
 
-    if (sortMode === 'downloads') {
+    if (sortMode === 'views') {
+      list.sort((a, b) => (b.views || 0) - (a.views || 0) || (b.createdAt || 0) - (a.createdAt || 0));
+    } else if (sortMode === 'downloads') {
       list.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
     } else if (sortMode === 'name') {
       list.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
@@ -482,11 +351,24 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     if (!grid) return;
     const list = getFilteredProjects();
 
+    if (projects.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <h3>Chưa có dự án nào được đăng</h3>
+          <p style="margin-bottom: 20px;">Kho dự án của ${escapeHTML(profile.brand)} hiện đang trống. Bắt đầu bằng việc đăng tải sản phẩm đầu tiên của bạn.</p>
+          <button type="button" class="btn btn-primary" data-action="open-upload">
+            + Đăng dự án đầu tiên
+          </button>
+        </div>
+      `;
+      return;
+    }
+
     if (list.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
           <h3>Không tìm thấy dự án phù hợp</h3>
-          <p>Thử đổi từ khóa tìm kiếm hoặc bấm "Đăng dự án" để thêm sản phẩm mới.</p>
+          <p>Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.</p>
         </div>
       `;
       return;
@@ -512,7 +394,7 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
             <div class="project-cover">
               <div class="project-cover-meta">
                 <span class="meta-chip">${escapeHTML(p.category)}</span>
-                <span class="meta-chip meta-chip--accent">${escapeHTML(p.version || 'v1.0.0')}</span>
+                <span class="meta-chip meta-chip--accent">${(p.views || 0).toLocaleString('vi-VN')} lượt xem • ${escapeHTML(p.version || 'v1.0.0')}</span>
               </div>
               ${coverHTML}
             </div>
@@ -522,11 +404,11 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
               <div class="tag-list">${tagsHTML}</div>
               <div class="project-footer">
                 <div class="file-info">
-                  <span>${escapeHTML(ext)}</span>
-                  <span>•</span>
-                  <span>${escapeHTML(formatBytes(p.fileSize))}</span>
+                  <span>${(p.views || 0).toLocaleString('vi-VN')} xem</span>
                   <span>•</span>
                   <span>${(p.downloads || 0).toLocaleString('vi-VN')} tải</span>
+                  <span>•</span>
+                  <span>${escapeHTML(ext)} (${escapeHTML(formatBytes(p.fileSize))})</span>
                 </div>
                 <div class="project-actions">
                   <button type="button" class="btn btn-secondary btn-sm" data-action="detail" data-id="${escapeHTML(p.id)}">
@@ -561,7 +443,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
 
     let downloaded = false;
 
-    // Case 1: User-uploaded binary stored in IndexedDB or memory
     if (project.hasBlob) {
       const blob = memoryFiles.get(project.id) || (await getFileBlob(project.id));
       if (blob) {
@@ -570,22 +451,11 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       }
     }
 
-    // Case 2: Built-in sample content
-    if (!downloaded && project.sampleContent) {
-      const blob = new Blob([project.sampleContent], {
-        type: project.fileType || 'text/plain;charset=utf-8'
-      });
-      triggerBlobDownload(blob, project.fileName || `${project.id}.txt`);
-      downloaded = true;
-    }
-
-    // Case 3: External URL
     if (!downloaded && project.externalUrl) {
       window.open(project.externalUrl, '_blank', 'noopener,noreferrer');
       downloaded = true;
     }
 
-    // Case 4: Fallback generated README summary
     if (!downloaded) {
       const readme = `# ${project.title} (${project.version || 'v1.0.0'})\n\nDanh mục: ${project.category}\nMô tả:\n${project.description}\n\nCông nghệ: ${(project.tags || []).join(', ')}\n`;
       const blob = new Blob([readme], { type: 'text/markdown;charset=utf-8' });
@@ -599,7 +469,7 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       renderStats();
       renderProjects();
       if (activeDetailId === project.id) {
-        openDetailModal(project.id);
+        renderDetailModalContent(project);
       }
       showToast(`Đang tải xuống "${project.title}"`);
     }
@@ -626,7 +496,7 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
   }
 
   /* ------------------------------------------------------------------------
-     8. Modals (Upload, Detail, Profile)
+     8. Modals (Upload, Detail with Real View Increment, Profile)
      ------------------------------------------------------------------------ */
   function openModal(id) {
     const el = document.getElementById(id);
@@ -640,13 +510,10 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     if (!el) return;
     el.classList.remove('is-open');
     document.body.style.overflow = '';
+    if (id === 'detail-modal') activeDetailId = null;
   }
 
-  function openDetailModal(projectId) {
-    const project = projects.find((p) => p.id === projectId);
-    if (!project) return;
-    activeDetailId = project.id;
-
+  function renderDetailModalContent(project) {
     document.getElementById('detail-category-version').textContent =
       `${project.category.toUpperCase()} • ${project.version || 'v1.0.0'}`;
     document.getElementById('detail-modal-title').textContent = project.title;
@@ -663,15 +530,31 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
 
     const fileLabel = project.fileName || (project.externalUrl ? 'Liên kết tải ngoài' : 'README.md');
     document.getElementById('detail-meta').innerHTML = `
+      <span>Lượt xem: <strong>${(project.views || 0).toLocaleString('vi-VN')}</strong></span>
+      <span>Lượt tải: <strong>${(project.downloads || 0).toLocaleString('vi-VN')}</strong></span>
       <span>Tệp: <strong>${escapeHTML(fileLabel)}</strong></span>
       <span>Dung lượng: <strong>${escapeHTML(formatBytes(project.fileSize))}</strong></span>
-      <span>Lượt tải: <strong>${(project.downloads || 0).toLocaleString('vi-VN')}</strong></span>
       <span>Ngày đăng: <strong>${escapeHTML(formatDate(project.createdAt))}</strong></span>
     `;
 
     const deleteBtn = document.getElementById('detail-delete-btn');
-    deleteBtn.style.display = project.isSample ? 'none' : 'inline-flex';
+    deleteBtn.style.display = 'inline-flex';
+  }
 
+  function openDetailModal(projectId) {
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) return;
+    activeDetailId = project.id;
+
+    // Increment real view counter when user opens project details
+    project.views = (project.views || 0) + 1;
+    totalViews += 1;
+    persistProjects();
+    persistViews();
+    renderStats();
+    renderProjects();
+
+    renderDetailModalContent(project);
     openModal('detail-modal');
   }
 
@@ -721,7 +604,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       window.addEventListener('pointerup', () => document.body.classList.remove('cursor-down'), { passive: true });
       document.addEventListener('mouseleave', () => document.body.classList.remove('has-cursor'));
 
-      // Hover state delegation for interactive elements
       document.addEventListener('pointerover', (e) => {
         if (e.target.closest('a, button, input, select, textarea, .dropzone, .project-card')) {
           document.body.classList.add('cursor-hover');
@@ -734,10 +616,8 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       });
     }
 
-    // Smooth animation loop (lerp cursor ring + ambient light)
     function animate() {
       if (isTouchDevice) {
-        // On mobile, gently drift ambient light with scroll position
         const scrollRatio = Math.min(window.scrollY / Math.max(document.body.scrollHeight - window.innerHeight, 1), 1);
         mouseX = window.innerWidth * (0.25 + Math.sin(scrollRatio * Math.PI * 2) * 0.25 + 0.25);
         mouseY = window.innerHeight * (0.22 + scrollRatio * 0.45);
@@ -780,7 +660,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     const cards = document.querySelectorAll('.project-card');
     cards.forEach((card) => {
       if (!prefersReducedMotion && !isTouchDevice) {
-        // PC: Specular spotlight + damped 3D perspective tilt
         card.addEventListener('pointermove', (e) => {
           if (e.pointerType !== 'mouse') return;
           const rect = card.getBoundingClientRect();
@@ -798,7 +677,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
           card.style.transform = '';
         });
       } else {
-        // Mobile / Touch: Tactile ripple & active spotlight at tap point
         card.addEventListener('pointerdown', (e) => {
           const rect = card.getBoundingClientRect();
           const x = e.clientX - rect.left;
@@ -856,7 +734,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     const scrollCue = document.getElementById('scroll-cue');
     const projectsGrid = document.getElementById('projects-grid');
 
-    // IntersectionObserver for scroll reveal
     if ('IntersectionObserver' in window && !prefersReducedMotion) {
       const observer = new IntersectionObserver(
         (entries) => {
@@ -900,7 +777,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
         heroParallax.style.opacity = opacity.toFixed(3);
       }
 
-      // Subtle velocity skew on project grid (both PC & Mobile)
       if (!prefersReducedMotion && projectsGrid) {
         const velocity = y - lastScrollY;
         const skew = Math.max(Math.min(velocity * 0.035, 1.4), -1.4);
@@ -930,15 +806,13 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
   }
 
   /* ------------------------------------------------------------------------
-     10. Event Wiring & Initialization
+     10. Event Wiring
      ------------------------------------------------------------------------ */
   function bindEvents() {
-    // Open Upload Modal triggers
     ['open-upload-btn', 'hero-upload-btn', 'section-upload-btn'].forEach((id) => {
       document.getElementById(id)?.addEventListener('click', () => openModal('upload-modal'));
     });
 
-    // Mobile Nav Drawer
     const mobileBtn = document.getElementById('mobile-menu-btn');
     const mobileNav = document.getElementById('mobile-nav');
     const toggleMobileNav = (forceClose = false) => {
@@ -960,7 +834,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       });
     });
 
-    // Close modal buttons & backdrop click & ESC key
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {
       btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
     });
@@ -976,7 +849,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       }
     });
 
-    // Category Filter Tabs
     document.getElementById('filter-tabs')?.addEventListener('click', (e) => {
       const btn = e.target.closest('.filter-tab');
       if (!btn) return;
@@ -989,7 +861,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       renderProjects();
     });
 
-    // Search & Sort
     document.getElementById('search-input')?.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       renderProjects();
@@ -999,7 +870,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       renderProjects();
     });
 
-    // Project Card Actions (Event Delegation)
     document.getElementById('projects-grid')?.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -1008,17 +878,18 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
         downloadProject(id);
       } else if (action === 'detail') {
         openDetailModal(id);
+      } else if (action === 'open-upload') {
+        openModal('upload-modal');
       }
     });
 
-    // Detail Modal Download & Delete
     document.getElementById('detail-download-btn')?.addEventListener('click', () => {
       if (activeDetailId) downloadProject(activeDetailId);
     });
     document.getElementById('detail-delete-btn')?.addEventListener('click', async () => {
       if (!activeDetailId) return;
       const target = projects.find((p) => p.id === activeDetailId);
-      if (!target || target.isSample) return;
+      if (!target) return;
       projects = projects.filter((p) => p.id !== activeDetailId);
       memoryFiles.delete(activeDetailId);
       await deleteFileBlob(activeDetailId);
@@ -1029,7 +900,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       showToast(`Đã xóa dự án "${target.title}"`);
     });
 
-    // Upload File Dropzone
     const dropzone = document.getElementById('file-dropzone');
     const fileInput = document.getElementById('proj-file');
     const fileInfoEl = document.getElementById('selected-file-info');
@@ -1059,7 +929,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       handleSelectedFile(e.dataTransfer.files[0]);
     });
 
-    // Upload Project Form Submit
     document.getElementById('upload-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('proj-title').value.trim();
@@ -1111,9 +980,9 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
         hasBlob,
         coverDataUrl,
         coverIndex: projects.length,
+        views: 0,
         downloads: 0,
-        createdAt: Date.now(),
-        isSample: false
+        createdAt: Date.now()
       };
 
       projects.unshift(newProject);
@@ -1121,7 +990,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       renderStats();
       renderProjects();
 
-      // Reset form
       e.target.reset();
       selectedUploadFile = null;
       fileInfoEl.textContent = '';
@@ -1130,7 +998,6 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Edit Profile Modal
     document.getElementById('edit-profile-btn')?.addEventListener('click', () => {
       document.getElementById('input-brand').value = profile.brand;
       document.getElementById('input-headline').value = profile.headline;
@@ -1151,11 +1018,11 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       };
       persistProfile();
       renderProfile();
+      renderProjects();
       closeModal('profile-modal');
       showToast('Đã cập nhật hồ sơ cá nhân');
     });
 
-    // Copy Email
     document.getElementById('copy-email-btn')?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(profile.email);
@@ -1165,23 +1032,24 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       }
     });
 
-    // Footer year
     const yearEl = document.getElementById('footer-year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
   }
 
   /* ------------------------------------------------------------------------
-     11. Opening Intro Curtain & Choreographed Entrance
+     11. Opening Intro with 100% Burst / Pop-Out-of-Screen Effect
      ------------------------------------------------------------------------ */
-  function animateCount(el, target, padTwo = false) {
-    if (!el || prefersReducedMotion) return;
-    const duration = 900;
+  function animateCount(el, target) {
+    if (!el || prefersReducedMotion || target === 0) {
+      if (el) el.textContent = target.toLocaleString('vi-VN');
+      return;
+    }
+    const duration = 750;
     const start = performance.now();
     function step(now) {
       const t = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      const val = Math.round(target * eased);
-      el.textContent = padTwo ? String(val).padStart(2, '0') : val.toLocaleString('vi-VN');
+      el.textContent = Math.round(target * eased).toLocaleString('vi-VN');
       if (t < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -1194,10 +1062,10 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
 
     const finishIntro = () => {
       document.body.classList.add('is-loaded');
-      const totalProjects = projects.length;
-      const totalDownloads = projects.reduce((sum, p) => sum + (p.downloads || 0), 0);
-      animateCount(document.getElementById('stat-projects'), totalProjects, true);
-      animateCount(document.getElementById('stat-downloads'), totalDownloads, false);
+      const stats = getRealStats();
+      animateCount(document.getElementById('stat-views'), stats.views);
+      animateCount(document.getElementById('stat-projects'), stats.projects);
+      animateCount(document.getElementById('stat-downloads'), stats.downloads);
     };
 
     if (!overlay || prefersReducedMotion) {
@@ -1207,12 +1075,11 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
     }
 
     document.body.style.overflow = 'hidden';
-    const duration = 1100;
+    const duration = 1050;
     const start = performance.now();
 
     function frame(now) {
-      const elapsed = now - start;
-      const t = Math.min(elapsed / duration, 1);
+      const t = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       const pct = Math.round(eased * 100);
 
@@ -1222,12 +1089,14 @@ echo "Sao lưu hoàn tất: $ARCHIVE"
       if (t < 1) {
         requestAnimationFrame(frame);
       } else {
+        // Hit 100%: trigger pop/burst shockwave & launch intro out of screen
+        overlay.classList.add('is-bursting');
         setTimeout(() => {
           overlay.classList.add('is-leaving');
           document.body.style.overflow = '';
           finishIntro();
-          setTimeout(() => overlay.classList.add('is-done'), 920);
-        }, 160);
+          setTimeout(() => overlay.classList.add('is-done'), 820);
+        }, 280);
       }
     }
 

@@ -20,6 +20,7 @@
 <body>
   <!-- Opening Intro Curtain -->
   <div class="intro-overlay" id="intro-overlay" aria-hidden="true">
+    <div class="intro-burst-ring" aria-hidden="true"></div>
     <div class="intro-inner">
       <div class="intro-monogram" id="intro-monogram">NK</div>
       <div class="intro-title-mask">
@@ -129,7 +130,11 @@
             </button>
           </div>
 
-          <div class="stats-strip hero-enter" data-delay="5" aria-label="Thống kê kho dự án">
+          <div class="stats-strip hero-enter" data-delay="5" aria-label="Thống kê thực tế">
+            <div class="stat-item">
+              <span class="stat-value" id="stat-views">0</span>
+              <span class="stat-label">Lượt xem</span>
+            </div>
             <div class="stat-item">
               <span class="stat-value" id="stat-projects">0</span>
               <span class="stat-label">Dự án đã đăng</span>
@@ -137,10 +142,6 @@
             <div class="stat-item">
               <span class="stat-value" id="stat-downloads">0</span>
               <span class="stat-label">Lượt tải xuống</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value" id="stat-latest">—</span>
-              <span class="stat-label">Bản phát hành mới nhất</span>
             </div>
           </div>
 
@@ -191,6 +192,7 @@
             </div>
 
             <select class="select" id="sort-select" aria-label="Sắp xếp dự án">
+              <option value="views">Xem nhiều nhất</option>
               <option value="newest">Mới nhất</option>
               <option value="downloads">Tải nhiều nhất</option>
               <option value="name">Tên A → Z</option>
