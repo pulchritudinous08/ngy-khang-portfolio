@@ -130,12 +130,12 @@
             </button>
           </div>
 
-          <div class="stats-strip hero-enter" data-delay="5" aria-label="Thống kê thực tế">
-            <div class="stat-item">
+          <div class="stats-strip hero-enter" id="stats-strip" data-delay="5" aria-label="Thống kê thực tế">
+            <div class="stat-item stat-item--ocean">
               <span class="stat-value" id="stat-views">0</span>
               <span class="stat-label">Lượt xem</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item stat-item--ocean">
               <span class="stat-value" id="stat-projects">0</span>
               <span class="stat-label">Dự án đã đăng</span>
             </div>
@@ -447,6 +447,19 @@
           <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Floating Ocean-Blue Stats Bar (visible after scrolling past Hero) -->
+  <div class="floating-stats" id="floating-stats" role="button" tabindex="0" aria-label="Thống kê lượt xem và số dự án">
+    <div class="floating-stat-item">
+      <span class="floating-stat-value" id="floating-stat-views">0</span>
+      <span class="floating-stat-label">Lượt xem</span>
+    </div>
+    <span class="floating-stat-divider" aria-hidden="true"></span>
+    <div class="floating-stat-item">
+      <span class="floating-stat-value" id="floating-stat-projects">0</span>
+      <span class="floating-stat-label">Dự án</span>
     </div>
   </div>
 

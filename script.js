@@ -319,9 +319,16 @@
 
   function renderStats() {
     const stats = getRealStats();
-    document.getElementById('stat-views').textContent = stats.views.toLocaleString('vi-VN');
-    document.getElementById('stat-projects').textContent = stats.projects.toLocaleString('vi-VN');
+    const viewsText = stats.views.toLocaleString('vi-VN');
+    const projectsText = stats.projects.toLocaleString('vi-VN');
+    document.getElementById('stat-views').textContent = viewsText;
+    document.getElementById('stat-projects').textContent = projectsText;
     document.getElementById('stat-downloads').textContent = stats.downloads.toLocaleString('vi-VN');
+
+    const floatViews = document.getElementById('floating-stat-views');
+    const floatProjects = document.getElementById('floating-stat-projects');
+    if (floatViews) floatViews.textContent = viewsText;
+    if (floatProjects) floatProjects.textContent = projectsText;
   }
 
   function getFilteredProjects() {
@@ -394,7 +401,7 @@
             <div class="project-cover">
               <div class="project-cover-meta">
                 <span class="meta-chip">${escapeHTML(p.category)}</span>
-                <span class="meta-chip meta-chip--accent">${(p.views || 0).toLocaleString('vi-VN')} lượt xem • ${escapeHTML(p.version || 'v1.0.0')}</span>
+                <span class="meta-chip meta-chip--accent"><span class="views-ocean">${(p.views || 0).toLocaleString('vi-VN')} lượt xem</span> • ${escapeHTML(p.version || 'v1.0.0')}</span>
               </div>
               ${coverHTML}
             </div>
@@ -404,7 +411,7 @@
               <div class="tag-list">${tagsHTML}</div>
               <div class="project-footer">
                 <div class="file-info">
-                  <span>${(p.views || 0).toLocaleString('vi-VN')} xem</span>
+                  <span class="views-ocean">${(p.views || 0).toLocaleString('vi-VN')} xem</span>
                   <span>•</span>
                   <span>${(p.downloads || 0).toLocaleString('vi-VN')} tải</span>
                   <span>•</span>
@@ -733,6 +740,8 @@
     const heroParallax = document.getElementById('hero-parallax');
     const scrollCue = document.getElementById('scroll-cue');
     const projectsGrid = document.getElementById('projects-grid');
+    const statsStrip = document.getElementById('stats-strip');
+    const floatingStats = document.getElementById('floating-stats');
 
     if ('IntersectionObserver' in window && !prefersReducedMotion) {
       const observer = new IntersectionObserver(
@@ -754,6 +763,7 @@
     let lastScrollY = window.scrollY;
     let ticking = false;
     let skewTimeout = null;
+    let floatPulseTimeout = null;
 
     function onScroll() {
       const y = window.scrollY;
@@ -768,6 +778,24 @@
       }
       if (scrollCue) {
         scrollCue.style.opacity = y > 90 ? '0' : '1';
+      }
+
+      // Highlight ocean-blue Views & Projects stats smoothly as you scroll down,
+      // and keep them highlighted in the floating dock even after scrolling past!
+      if (statsStrip) {
+        statsStrip.classList.toggle('is-scroll-active', y > 10);
+        if (floatingStats) {
+          const rect = statsStrip.getBoundingClientRect();
+          const passedStats = rect.bottom < 90;
+          floatingStats.classList.toggle('is-visible', passedStats);
+          if (passedStats && Math.abs(y - lastScrollY) > 0.5) {
+            floatingStats.classList.add('is-scrolling');
+            clearTimeout(floatPulseTimeout);
+            floatPulseTimeout = setTimeout(() => {
+              floatingStats.classList.remove('is-scrolling');
+            }, 220);
+          }
+        }
       }
 
       if (!prefersReducedMotion && heroParallax && y < window.innerHeight) {
@@ -811,6 +839,17 @@
   function bindEvents() {
     ['open-upload-btn', 'hero-upload-btn', 'section-upload-btn'].forEach((id) => {
       document.getElementById(id)?.addEventListener('click', () => openModal('upload-modal'));
+    });
+
+    const floatingStats = document.getElementById('floating-stats');
+    floatingStats?.addEventListener('click', () => {
+      document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+    });
+    floatingStats?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+      }
     });
 
     const mobileBtn = document.getElementById('mobile-menu-btn');
