@@ -215,6 +215,34 @@
           </div>
         </div>
 
+        <!-- Quick Direct File Upload Bar -->
+        <div class="quick-upload-bar reveal" id="quick-upload-bar">
+          <div class="quick-upload-info">
+            <div class="quick-upload-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div>
+              <div class="quick-upload-title">Up tệp dự án trực tiếp từ máy</div>
+              <div class="quick-upload-hint">Kéo thả 1 hoặc nhiều tệp vào đây (.zip, .html, .js, .py, .apk, .pdf, ảnh...) hoặc bấm chọn tệp.</div>
+            </div>
+          </div>
+          <div class="quick-upload-actions">
+            <label for="quick-file-input" class="btn btn-ocean magnetic" id="quick-file-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>Chọn tệp từ máy</span>
+            </label>
+            <input type="file" id="quick-file-input" multiple hidden />
+          </div>
+        </div>
+
         <!-- Dynamic Project Cards Grid -->
         <div class="projects-grid" id="projects-grid" aria-live="polite"></div>
       </div>
@@ -351,13 +379,13 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tệp đính kèm để người dùng tải về</label>
-          <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Chọn tệp dự án để tải lên">
-            <input type="file" id="proj-file" hidden />
-            <div class="dropzone-title">Kéo thả tệp vào đây hoặc bấm để chọn</div>
-            <div class="dropzone-hint">Hỗ trợ .zip, .rar, .html, .js, .py, .pdf, .apk, .exe...</div>
-            <div class="dropzone-file" id="selected-file-info"></div>
-          </div>
+          <label class="form-label">Tệp đính kèm để người dùng tải về (hỗ trợ nhiều tệp)</label>
+          <label class="dropzone" id="file-dropzone" for="proj-file">
+            <input type="file" id="proj-file" multiple hidden />
+            <div class="dropzone-title">Bấm để chọn tệp từ máy hoặc kéo thả vào đây</div>
+            <div class="dropzone-hint">Hỗ trợ mọi định dạng: .zip, .rar, .html, .js, .py, .pdf, .apk, .exe, ảnh...</div>
+          </label>
+          <div class="attached-files-list" id="attached-files-list"></div>
         </div>
 
         <div class="form-group">
@@ -400,6 +428,8 @@
       <div class="tag-list" id="detail-tags" style="margin-top: 16px;"></div>
 
       <div class="detail-meta-bar" id="detail-meta"></div>
+
+      <div class="attached-files-list" id="detail-files-list"></div>
 
       <div class="modal-footer" style="justify-content: space-between;">
         <button type="button" class="btn btn-danger btn-sm" id="detail-delete-btn" style="display: none;">Xóa dự án</button>
@@ -464,6 +494,12 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- Global Drag & Drop Overlay -->
+  <div class="global-drop-overlay" id="global-drop-overlay" aria-hidden="true">
+    <h3>Thả tệp vào đây để đăng lên kho</h3>
+    <p>Hỗ trợ thả cùng lúc nhiều tệp bất kỳ từ máy của bạn</p>
   </div>
 
   <!-- Floating Ocean-Blue Stats Bar (visible after scrolling past Hero) -->

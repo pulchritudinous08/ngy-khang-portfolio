@@ -184,7 +184,7 @@
   let activeCategory = 'all';
   let searchQuery = '';
   let sortMode = 'views';
-  let selectedUploadFile = null;
+  let selectedUploadFiles = [];
   let activeDetailId = null;
 
   function loadProjects() {
@@ -454,15 +454,49 @@
   }
 
   /* ------------------------------------------------------------------------
-     7. Download & Project Management Logic
+     7. Download & Project Management Logic (Single & Multi-file)
      ------------------------------------------------------------------------ */
+  async function downloadSingleProjectFile(projectId, fileIndex) {
+    const project = projects.find((p) => p.id === projectId);
+    if (!project || !Array.isArray(project.files) || !project.files[fileIndex]) return;
+    const f = project.files[fileIndex];
+    const blob = memoryFiles.get(f.blobKey) || (await getFileBlob(f.blobKey));
+    if (!blob) {
+      showToast('Không tìm thấy dữ liệu tệp trong bộ nhớ trình duyệt.');
+      return;
+    }
+    triggerBlobDownload(blob, f.name || `${project.title}.bin`);
+    project.downloads = (project.downloads || 0) + 1;
+    persistProjects();
+    renderStats();
+    renderProjects();
+    if (activeDetailId === project.id) renderDetailModalContent(project);
+    showToast(`Đang tải xuống "${f.name}"`);
+  }
+
   async function downloadProject(projectId) {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
 
     let downloaded = false;
 
-    if (project.hasBlob) {
+    // Multi-file projects
+    if (Array.isArray(project.files) && project.files.length > 0) {
+      for (let i = 0; i < project.files.length; i += 1) {
+        const f = project.files[i];
+        const blob = memoryFiles.get(f.blobKey) || (await getFileBlob(f.blobKey));
+        if (blob) {
+          triggerBlobDownload(blob, f.name || `${project.title}-${i + 1}.bin`);
+          downloaded = true;
+          if (project.files.length > 1) {
+            await new Promise((r) => setTimeout(r, 220));
+          }
+        }
+      }
+    }
+
+    // Legacy single-file projects
+    if (!downloaded && project.hasBlob) {
       const blob = memoryFiles.get(project.id) || (await getFileBlob(project.id));
       if (blob) {
         triggerBlobDownload(blob, project.fileName || `${project.title}.bin`);
@@ -547,14 +581,37 @@
       .map((t) => `<span class="tag">${escapeHTML(t)}</span>`)
       .join('');
 
-    const fileLabel = project.fileName || (project.externalUrl ? 'Liên kết tải ngoài' : 'README.md');
+    const fileCount = Array.isArray(project.files) && project.files.length > 0 ? project.files.length : (project.fileName ? 1 : 0);
+    const fileLabel = fileCount > 1
+      ? `${fileCount} tệp đính kèm`
+      : (project.fileName || (project.externalUrl ? 'Liên kết tải ngoài' : 'README.md'));
+
     document.getElementById('detail-meta').innerHTML = `
-      <span>Lượt xem: <strong>${(project.views || 0).toLocaleString('vi-VN')}</strong></span>
+      <span>Lượt xem: <strong class="views-ocean">${(project.views || 0).toLocaleString('vi-VN')}</strong></span>
       <span>Lượt tải: <strong>${(project.downloads || 0).toLocaleString('vi-VN')}</strong></span>
       <span>Tệp: <strong>${escapeHTML(fileLabel)}</strong></span>
       <span>Dung lượng: <strong>${escapeHTML(formatBytes(project.fileSize))}</strong></span>
       <span>Ngày đăng: <strong>${escapeHTML(formatDate(project.createdAt))}</strong></span>
     `;
+
+    const filesListEl = document.getElementById('detail-files-list');
+    if (filesListEl) {
+      if (Array.isArray(project.files) && project.files.length > 0) {
+        filesListEl.innerHTML = project.files
+          .map(
+            (f, idx) => `
+              <div class="attached-file-row">
+                <span class="attached-file-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
+                <span class="attached-file-size">${escapeHTML(formatBytes(f.size))}</span>
+                <button type="button" class="btn btn-secondary btn-sm" data-download-file-idx="${idx}">Tải</button>
+              </div>
+            `
+          )
+          .join('');
+      } else {
+        filesListEl.innerHTML = '';
+      }
+    }
 
     const deleteBtn = document.getElementById('detail-delete-btn');
     deleteBtn.style.display = 'inline-flex';
@@ -1039,6 +1096,11 @@
     document.getElementById('detail-download-btn')?.addEventListener('click', () => {
       if (activeDetailId) downloadProject(activeDetailId);
     });
+    document.getElementById('detail-files-list')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-download-file-idx]');
+      if (!btn || !activeDetailId) return;
+      downloadSingleProjectFile(activeDetailId, Number(btn.dataset.downloadFileIdx));
+    });
     document.getElementById('detail-delete-btn')?.addEventListener('click', async () => {
       if (!activeDetailId) return;
       const target = projects.find((p) => p.id === activeDetailId);
@@ -1046,6 +1108,12 @@
       projects = projects.filter((p) => p.id !== activeDetailId);
       memoryFiles.delete(activeDetailId);
       await deleteFileBlob(activeDetailId);
+      if (Array.isArray(target.files)) {
+        for (const f of target.files) {
+          memoryFiles.delete(f.blobKey);
+          await deleteFileBlob(f.blobKey);
+        }
+      }
       persistProjects();
       renderStats();
       renderProjects();
@@ -1055,31 +1123,103 @@
 
     const dropzone = document.getElementById('file-dropzone');
     const fileInput = document.getElementById('proj-file');
-    const fileInfoEl = document.getElementById('selected-file-info');
+    const attachedListEl = document.getElementById('attached-files-list');
+    const quickBar = document.getElementById('quick-upload-bar');
+    const quickFileInput = document.getElementById('quick-file-input');
+    const globalDropOverlay = document.getElementById('global-drop-overlay');
 
-    const handleSelectedFile = (file) => {
-      if (!file) return;
-      selectedUploadFile = file;
-      fileInfoEl.textContent = `Đã chọn: ${file.name} (${formatBytes(file.size)})`;
+    const renderAttachedFiles = () => {
+      if (!attachedListEl) return;
+      if (selectedUploadFiles.length === 0) {
+        attachedListEl.innerHTML = '';
+        return;
+      }
+      attachedListEl.innerHTML = selectedUploadFiles
+        .map(
+          (f, idx) => `
+            <div class="attached-file-row">
+              <span class="attached-file-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
+              <span class="attached-file-size">${escapeHTML(formatBytes(f.size))}</span>
+              <button type="button" class="file-remove-btn" data-remove-file-idx="${idx}" aria-label="Gỡ tệp">✕</button>
+            </div>
+          `
+        )
+        .join('');
     };
 
-    dropzone?.addEventListener('click', () => fileInput.click());
-    dropzone?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+    const addFilesToQueue = (fileList, openUploadAfter = false) => {
+      const incoming = Array.from(fileList || []).filter(Boolean);
+      if (incoming.length === 0) return;
+      selectedUploadFiles = [...selectedUploadFiles, ...incoming];
+      renderAttachedFiles();
+
+      const titleInput = document.getElementById('proj-title');
+      if (titleInput && !titleInput.value.trim()) {
+        const cleanName = incoming[0].name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ');
+        titleInput.value = cleanName;
+      }
+
+      if (openUploadAfter) {
+        openModal('upload-modal');
+      }
+      showToast(`Đã thêm ${incoming.length} tệp sẵn sàng đăng`);
+    };
+
+    attachedListEl?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-remove-file-idx]');
+      if (!btn) return;
+      selectedUploadFiles.splice(Number(btn.dataset.removeFileIdx), 1);
+      renderAttachedFiles();
+    });
+
+    fileInput?.addEventListener('change', (e) => {
+      addFilesToQueue(e.target.files, false);
+      e.target.value = '';
+    });
+
+    quickFileInput?.addEventListener('change', (e) => {
+      addFilesToQueue(e.target.files, true);
+      e.target.value = '';
+    });
+
+    [dropzone, quickBar].forEach((zone) => {
+      if (!zone) return;
+      zone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        fileInput.click();
+        zone.classList.add('is-dragover');
+      });
+      zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('is-dragover');
+        if (globalDropOverlay) globalDropOverlay.classList.remove('is-active');
+        addFilesToQueue(e.dataTransfer.files, zone === quickBar);
+      });
+    });
+
+    // Global Drag & Drop anywhere on the window
+    let dragDepth = 0;
+    window.addEventListener('dragenter', (e) => {
+      if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+      dragDepth += 1;
+      globalDropOverlay?.classList.add('is-active');
+    });
+    window.addEventListener('dragover', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
       }
     });
-    fileInput?.addEventListener('change', (e) => handleSelectedFile(e.target.files[0]));
-    dropzone?.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('is-dragover');
+    window.addEventListener('dragleave', () => {
+      dragDepth = Math.max(dragDepth - 1, 0);
+      if (dragDepth === 0) globalDropOverlay?.classList.remove('is-active');
     });
-    dropzone?.addEventListener('dragleave', () => dropzone.classList.remove('is-dragover'));
-    dropzone?.addEventListener('drop', (e) => {
+    window.addEventListener('drop', (e) => {
+      if (!e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
       e.preventDefault();
-      dropzone.classList.remove('is-dragover');
-      handleSelectedFile(e.dataTransfer.files[0]);
+      dragDepth = 0;
+      globalDropOverlay?.classList.remove('is-active');
+      addFilesToQueue(e.dataTransfer.files, true);
     });
 
     document.getElementById('upload-form')?.addEventListener('submit', async (e) => {
@@ -1100,19 +1240,29 @@
         .map((t) => t.trim())
         .filter(Boolean);
 
-      let hasBlob = false;
-      let fileName = '';
-      let fileSize = 0;
-      let fileType = '';
+      const savedFiles = [];
+      let totalSize = 0;
 
-      if (selectedUploadFile) {
-        fileName = selectedUploadFile.name;
-        fileSize = selectedUploadFile.size;
-        fileType = selectedUploadFile.type || 'application/octet-stream';
-        memoryFiles.set(id, selectedUploadFile);
-        await saveFileBlob(id, selectedUploadFile);
-        hasBlob = true;
+      for (let i = 0; i < selectedUploadFiles.length; i += 1) {
+        const f = selectedUploadFiles[i];
+        const blobKey = `${id}::${i}`;
+        memoryFiles.set(blobKey, f);
+        await saveFileBlob(blobKey, f);
+        totalSize += f.size || 0;
+        savedFiles.push({
+          blobKey,
+          name: f.name,
+          size: f.size || 0,
+          type: f.type || 'application/octet-stream'
+        });
       }
+
+      const hasBlob = savedFiles.length > 0;
+      const fileName = savedFiles.length === 1
+        ? savedFiles[0].name
+        : (savedFiles.length > 1 ? `${savedFiles.length} tệp` : '');
+      const fileSize = totalSize;
+      const fileType = savedFiles[0]?.type || '';
 
       let coverDataUrl = null;
       if (coverFile) {
@@ -1126,6 +1276,7 @@
         version,
         description,
         tags: tags.length ? tags : [category],
+        files: savedFiles,
         fileName,
         fileSize,
         fileType,
@@ -1144,8 +1295,8 @@
       renderProjects();
 
       e.target.reset();
-      selectedUploadFile = null;
-      fileInfoEl.textContent = '';
+      selectedUploadFiles = [];
+      renderAttachedFiles();
       closeModal('upload-modal');
       showToast(`Đã đăng dự án "${title}" thành công!`);
       document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
